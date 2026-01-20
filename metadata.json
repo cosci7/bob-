@@ -1,0 +1,8 @@
+{
+  "name": "OmniCore AI PC Assistant",
+  "description": "A futuristic AI assistant that interacts with a simulated PC environment using Gemini Live API and function calling.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
