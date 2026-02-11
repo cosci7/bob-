@@ -15,7 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ systemState }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-white tracking-wider">OMNICORE</h2>
+        <h2 className="text-xl font-bold text-white tracking-wider">JARVIS</h2>
         <p className="text-xs text-slate-500 uppercase tracking-tighter">Neural Assistant</p>
       </div>
 

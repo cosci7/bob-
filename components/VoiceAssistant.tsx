@@ -157,7 +157,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } },
           },
-          systemInstruction: `Sei OmniCore, un'entità digitale integrata nel sistema operativo dell'utente.
+          systemInstruction: `Sei JARVIS, un'intelligenza artificiale avanzata integrata nel sistema operativo dell'utente.
           Parla in Italiano. Hai permessi per creare file, note e gestire il download degli asset.
           Sii sintetico, efficiente e tecnico. Conferma sempre quando crei un file.`,
           tools: [{ functionDeclarations: controlFunctions }],
@@ -167,7 +167,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
           onopen: () => {
             setIsActive(true);
             setIsConnecting(false);
-            addLog('OmniCore Live Status: OPERATIONAL', 'info');
+            addLog('JARVIS Live Status: OPERATIONAL', 'info');
 
             const source = inputCtx.createMediaStreamSource(stream);
             const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
@@ -262,7 +262,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
     if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
     setIsActive(false);
     setVisualizerData(new Array(32).fill(0));
-    addLog('OmniCore Offline.', 'info');
+    addLog('JARVIS Offline.', 'info');
   };
 
   return (
@@ -303,7 +303,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
             : 'bg-sky-500 text-white hover:bg-sky-400'
         } ${isConnecting ? 'opacity-50 cursor-wait' : ''}`}
       >
-        {isConnecting ? 'ESTABLISHING LINK...' : isActive ? 'TERMINATE SESSION' : 'INITIALIZE OMNICORE'}
+        {isConnecting ? 'ESTABLISHING LINK...' : isActive ? 'TERMINATE SESSION' : 'INITIALIZE JARVIS'}
       </button>
 
       <div className="grid grid-cols-2 gap-4">
