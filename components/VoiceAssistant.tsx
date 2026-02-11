@@ -143,7 +143,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
       if (!apiKey) {
-        addLog('API key not configured. Set VITE_GEMINI_API_KEY.', 'error');
+        addLog('API key not configured. Set VITE_GEMINI_API_KEY in .env.local.', 'error');
         setIsConnecting(false);
         return;
       }

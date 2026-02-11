@@ -1,6 +1,6 @@
 {
   "name": "JARVIS AI Assistant",
-  "description": "Un assistente stile Iron Man che controlla il PC simulato usando Gemini Live e funzioni integrate.",
+  "description": "Un assistente in stile Iron Man che controlla il PC simulato usando Gemini Live e funzioni integrate.",
   "requestFramePermissions": [
     "microphone",
     "camera"
