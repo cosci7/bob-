@@ -141,9 +141,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
       setIsConnecting(true);
       addLog('Neural Link establishing...', 'info');
 
-      const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
       if (!apiKey) {
-        addLog('API key non configurata. Imposta VITE_GEMINI_API_KEY.', 'error');
+        addLog('API key not configured. Set VITE_GEMINI_API_KEY.', 'error');
         setIsConnecting(false);
         return;
       }
