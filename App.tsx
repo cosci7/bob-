@@ -14,7 +14,7 @@ const App: React.FC = () => {
     ramUsage: 45,
     diskUsage: 68,
     uptime: '02:14:55',
-    activeWindow: 'OmniCore Dashboard',
+    activeWindow: 'JARVIS Dashboard',
     notifications: 0,
   });
 
@@ -72,7 +72,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col p-6 space-y-6 overflow-hidden relative z-20">
         <header className="flex justify-between items-center border-b border-slate-800 pb-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-sky-400">OMNICORE_OS <span className="text-slate-500 font-normal">v4.2.0</span></h1>
+            <h1 className="text-2xl font-bold tracking-tight text-sky-400">JARVIS_OS <span className="text-slate-500 font-normal">v4.2.0</span></h1>
             <p className="text-xs text-slate-500 uppercase tracking-widest font-mono">Kernel active - Authorization: Admin</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -82,7 +82,7 @@ const App: React.FC = () => {
             </div>
             <div className="text-right">
               <p className="text-xs font-mono text-slate-400">LATENCY: 12ms</p>
-              <p className="text-xs font-mono text-slate-400">ID: OMNI-SYS-PRIME</p>
+              <p className="text-xs font-mono text-slate-400">ID: JARVIS-CORE-01</p>
             </div>
           </div>
         </header>

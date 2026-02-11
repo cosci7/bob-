@@ -1,6 +1,6 @@
 {
-  "name": "OmniCore AI PC Assistant",
-  "description": "A futuristic AI assistant that interacts with a simulated PC environment using Gemini Live API and function calling.",
+  "name": "JARVIS AI Assistant",
+  "description": "Un assistente in stile Iron Man che controlla il PC simulato usando Gemini Live e funzioni integrate.",
   "requestFramePermissions": [
     "microphone",
     "camera"
