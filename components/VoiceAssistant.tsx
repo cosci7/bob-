@@ -141,7 +141,14 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
       setIsConnecting(true);
       addLog('Neural Link establishing...', 'info');
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
+      if (!apiKey) {
+        addLog('API key non configurata. Imposta VITE_GEMINI_API_KEY.', 'error');
+        setIsConnecting(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -157,9 +164,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } },
           },
-          systemInstruction: `Sei OmniCore, un'entità digitale integrata nel sistema operativo dell'utente.
-          Parla in Italiano. Hai permessi per creare file, note e gestire il download degli asset.
-          Sii sintetico, efficiente e tecnico. Conferma sempre quando crei un file.`,
+          systemInstruction: `Sei J.A.R.V.I.S., l'assistente personale dell'utente in stile Iron Man.
+          Rispondi in italiano con tono professionale e conciso.
+          Hai permessi per creare file, note e gestire il download degli asset: conferma sempre quando agisci.`,
           tools: [{ functionDeclarations: controlFunctions }],
           outputAudioTranscription: {},
         },
@@ -167,7 +174,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
           onopen: () => {
             setIsActive(true);
             setIsConnecting(false);
-            addLog('OmniCore Live Status: OPERATIONAL', 'info');
+            addLog('JARVIS Live Status: OPERATIONAL', 'info');
 
             const source = inputCtx.createMediaStreamSource(stream);
             const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
@@ -262,7 +269,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
     if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach(t => t.stop());
     setIsActive(false);
     setVisualizerData(new Array(32).fill(0));
-    addLog('OmniCore Offline.', 'info');
+    addLog('JARVIS Offline.', 'info');
   };
 
   return (
@@ -303,7 +310,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
             : 'bg-sky-500 text-white hover:bg-sky-400'
         } ${isConnecting ? 'opacity-50 cursor-wait' : ''}`}
       >
-        {isConnecting ? 'ESTABLISHING LINK...' : isActive ? 'TERMINATE SESSION' : 'INITIALIZE OMNICORE'}
+        {isConnecting ? 'ESTABLISHING LINK...' : isActive ? 'TERMINATE SESSION' : 'INITIALIZE JARVIS'}
       </button>
 
       <div className="grid grid-cols-2 gap-4">
