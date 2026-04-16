@@ -1,14 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import VoiceAssistant from './components/VoiceAssistant';
+import ChatInterface from './components/ChatInterface';
 import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
 import { SystemLog, Note, SystemState, FileAsset } from './types';
+
+type AIMode = 'voice' | 'chat';
 
 const App: React.FC = () => {
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [files, setFiles] = useState<FileAsset[]>([]);
+  const [aiMode, setAiMode] = useState<AIMode>('chat');
   const [systemState, setSystemState] = useState<SystemState>({
     cpuUsage: 12,
     ramUsage: 45,
@@ -94,21 +98,63 @@ const App: React.FC = () => {
 
           <div className="col-span-12 lg:col-span-4 flex flex-col space-y-6">
             <div className="glass-panel rounded-2xl p-6 flex-1 flex flex-col border border-sky-900/30 neon-glow">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-lg flex items-center">
                   <span className="w-4 h-4 bg-sky-500 rounded-full mr-3 shadow-[0_0_8px_rgba(56,189,248,0.8)]"></span>
                   AI Interface
                 </h2>
-                <span className="text-xs font-mono text-sky-500">GEMINI_LIVE_v2.5</span>
+                <span className="text-xs font-mono text-sky-500">
+                  {aiMode === 'voice' ? 'GEMINI_LIVE_v2.5' : 'GEMINI_CHAT_v2.5'}
+                </span>
               </div>
-              
-              <VoiceAssistant 
-                addLog={addLog} 
-                addNote={addNote} 
-                addFile={addFile}
-                setSystemState={setSystemState} 
-                files={files}
-              />
+
+              {/* Mode Switcher */}
+              <div className="flex mb-4 bg-slate-900/60 rounded-lg p-1 border border-slate-800">
+                <button
+                  onClick={() => setAiMode('chat')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-xs font-mono uppercase tracking-wider transition-all ${
+                    aiMode === 'chat'
+                      ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span>Chat</span>
+                </button>
+                <button
+                  onClick={() => setAiMode('voice')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 rounded-md text-xs font-mono uppercase tracking-wider transition-all ${
+                    aiMode === 'voice'
+                      ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" />
+                  </svg>
+                  <span>Voice</span>
+                </button>
+              </div>
+
+              {aiMode === 'voice' ? (
+                <VoiceAssistant
+                  addLog={addLog}
+                  addNote={addNote}
+                  addFile={addFile}
+                  setSystemState={setSystemState}
+                  files={files}
+                />
+              ) : (
+                <ChatInterface
+                  addLog={addLog}
+                  addNote={addNote}
+                  addFile={addFile}
+                  setSystemState={setSystemState}
+                  files={files}
+                />
+              )}
             </div>
           </div>
         </div>

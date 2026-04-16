@@ -29,3 +29,10 @@ export interface SystemState {
   activeWindow: string;
   notifications: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+}
