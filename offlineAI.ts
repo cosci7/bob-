@@ -15,6 +15,89 @@ interface OfflineResponse {
   };
 }
 
+// Safe math expression evaluator - no eval/Function used
+function evaluateMathExpression(input: string): number | null {
+  const sanitized = input
+    .replace(/[xX×]/g, '*')
+    .replace(/[÷]/g, '/')
+    .replace(/\s+/g, '');
+
+  // Only allow digits, operators, parentheses, and decimal points
+  if (!/^[0-9+\-*/().]+$/.test(sanitized) || !sanitized) return null;
+
+  // Tokenize
+  const tokens: (number | string)[] = [];
+  let i = 0;
+  while (i < sanitized.length) {
+    if (/[0-9.]/.test(sanitized[i])) {
+      let num = '';
+      while (i < sanitized.length && /[0-9.]/.test(sanitized[i])) {
+        num += sanitized[i++];
+      }
+      const parsed = parseFloat(num);
+      if (isNaN(parsed)) return null;
+      tokens.push(parsed);
+    } else if ('+-*/()'.includes(sanitized[i])) {
+      tokens.push(sanitized[i++]);
+    } else {
+      return null;
+    }
+  }
+
+  // Recursive descent parser
+  let pos = 0;
+
+  function parseExpr(): number | null {
+    let left = parseTerm();
+    if (left === null) return null;
+    while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
+      const op = tokens[pos++] as string;
+      const right = parseTerm();
+      if (right === null) return null;
+      left = op === '+' ? left + right : left - right;
+    }
+    return left;
+  }
+
+  function parseTerm(): number | null {
+    let left = parseFactor();
+    if (left === null) return null;
+    while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
+      const op = tokens[pos++] as string;
+      const right = parseFactor();
+      if (right === null) return null;
+      if (op === '/' && right === 0) return null;
+      left = op === '*' ? left * right : left / right;
+    }
+    return left;
+  }
+
+  function parseFactor(): number | null {
+    if (pos >= tokens.length) return null;
+    // Handle unary minus
+    if (tokens[pos] === '-') {
+      pos++;
+      const val = parseFactor();
+      return val === null ? null : -val;
+    }
+    if (tokens[pos] === '(') {
+      pos++; // skip '('
+      const val = parseExpr();
+      if (val === null || tokens[pos] !== ')') return null;
+      pos++; // skip ')'
+      return val;
+    }
+    if (typeof tokens[pos] === 'number') {
+      return tokens[pos++] as number;
+    }
+    return null;
+  }
+
+  const result = parseExpr();
+  if (result === null || pos !== tokens.length || !isFinite(result)) return null;
+  return Math.round(result * 1e10) / 1e10; // avoid floating point artifacts
+}
+
 const commands: OfflineCommand[] = [
   {
     patterns: [
@@ -94,17 +177,9 @@ const commands: OfflineCommand[] = [
     ],
     handler: (match) => {
       try {
-        const expr = match[1]
-          .replace(/[xX×]/g, '*')
-          .replace(/[÷]/g, '/')
-          .replace(/[^0-9+\-*/().%\s]/g, '');
-        if (!expr.trim()) {
+        const result = evaluateMathExpression(match[1]);
+        if (result === null) {
           return { text: 'Espressione non valida. Usa numeri e operatori (+, -, *, /).' };
-        }
-        // Simple and safe math evaluation using Function constructor with no access to scope
-        const result = new Function(`"use strict"; return (${expr})`)();
-        if (typeof result !== 'number' || !isFinite(result)) {
-          return { text: 'Risultato non valido. Controlla l\'espressione.' };
         }
         return { text: `🧮 ${match[1].trim()} = **${result}**` };
       } catch {

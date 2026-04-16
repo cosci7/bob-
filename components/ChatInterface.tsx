@@ -107,7 +107,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile,
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const apiKey = process.env.API_KEY || '';
+      if (!apiKey) {
+        addLog('API key non configurata, fallback offline.', 'error');
+        handleOfflineMessage(text);
+        setIsLoading(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
 
       historyRef.current.push({ role: 'user', parts: [{ text }] });
 

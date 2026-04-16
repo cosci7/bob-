@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import VoiceAssistant from './components/VoiceAssistant';
 import ChatInterface from './components/ChatInterface';
 import Dashboard from './components/Dashboard';
@@ -31,7 +31,7 @@ const App: React.FC = () => {
   useEffect(() => { saveFiles(files); }, [files]);
   useEffect(() => { saveLogs(logs); }, [logs]);
 
-  const addLog = (message: string, type: 'action' | 'info' | 'error' = 'info') => {
+  const addLog = useCallback((message: string, type: 'action' | 'info' | 'error' = 'info') => {
     const newLog: SystemLog = {
       id: Math.random().toString(36).substring(2, 11),
       timestamp: new Date().toLocaleTimeString(),
@@ -39,7 +39,7 @@ const App: React.FC = () => {
       type,
     };
     setLogs(prev => [newLog, ...prev].slice(0, 50));
-  };
+  }, []);
 
   const addNote = (content: string) => {
     const newNote: Note = {
@@ -96,8 +96,7 @@ const App: React.FC = () => {
   // Log online/offline transitions
   useEffect(() => {
     addLog(isOnline ? 'Connessione rete ristabilita.' : 'Connessione persa — modalità offline attiva.', isOnline ? 'info' : 'error');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline]);
+  }, [isOnline, addLog]);
 
   return (
     <div className="flex h-screen w-full bg-[#020617] text-slate-100 overflow-hidden relative">

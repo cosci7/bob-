@@ -28,7 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, notes, files, systemState, 
     <div className="flex-1 flex flex-col space-y-6 overflow-hidden">
       <div className="grid grid-cols-3 gap-6">
         <StatCard title="WINDOWS" value={systemState.activeWindow} color="sky" />
-        <StatCard title="FILES / NOTES" value={`${files.length} Files • ${notes.length} Note`} color="emerald" />
+        <StatCard title="FILES / NOTES" value={`${files.length} Files • ${notes.length} Notes`} color="emerald" />
         <StatCard title="SECURITY" value="ALPHA PROTOCOL" color="amber" />
       </div>
 

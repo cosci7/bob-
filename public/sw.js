@@ -24,8 +24,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for API calls, cache-first for static assets
-  if (event.request.url.includes('generativelanguage.googleapis.com') || event.request.url.includes('esm.sh')) {
+  let isApiRequest = false;
+  try {
+    const url = new URL(event.request.url);
+    isApiRequest = url.hostname === 'generativelanguage.googleapis.com' || url.hostname.endsWith('.esm.sh') || url.hostname === 'esm.sh';
+  } catch {
+    // Invalid URL - treat as static asset
+  }
+
+  if (isApiRequest) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
