@@ -31,7 +31,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile,
 
   const addMessage = (role: 'user' | 'assistant' | 'system', content: string) => {
     const msg: ChatMessage = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       role,
       content,
       timestamp: new Date().toLocaleTimeString(),
