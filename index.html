@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniCore AI</title>
+    <meta name="theme-color" content="#0ea5e9">
+    <meta name="description" content="JARVIS OS - AI Virtual Assistant with offline support">
+    <link rel="manifest" href="/manifest.json">
+    <title>JARVIS OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
@@ -39,6 +42,13 @@
             0% { bottom: 100%; }
             100% { bottom: -100px; }
         }
+        .offline-pulse {
+            animation: offlinePulse 2s ease-in-out infinite;
+        }
+        @keyframes offlinePulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
     </style>
 <script type="importmap">
 {
@@ -53,5 +63,12 @@
 </head>
 <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
 </body>
 </html>

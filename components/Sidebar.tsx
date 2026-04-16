@@ -4,29 +4,54 @@ import { SystemState } from '../types';
 
 interface SidebarProps {
   systemState: SystemState;
+  isOnline: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ systemState }) => {
+const Sidebar: React.FC<SidebarProps> = ({ systemState, isOnline }) => {
   return (
     <aside className="w-64 border-r border-slate-800 p-6 flex flex-col glass-panel z-30">
       <div className="mb-10">
-        <div className="w-12 h-12 bg-sky-600 rounded-lg flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(2,132,199,0.5)]">
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
+          isOnline
+            ? 'bg-sky-600 shadow-[0_0_20px_rgba(2,132,199,0.5)]'
+            : 'bg-amber-600 shadow-[0_0_20px_rgba(217,119,6,0.5)]'
+        }`}>
           <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
         <h2 className="text-xl font-bold text-white tracking-wider">JARVIS</h2>
-        <p className="text-xs text-slate-500 uppercase tracking-tighter">Neural Assistant</p>
+        <p className="text-xs text-slate-500 uppercase tracking-tighter">
+          {isOnline ? 'Neural Assistant' : 'Offline Mode'}
+        </p>
       </div>
 
       <nav className="flex-1 space-y-2">
         <NavItem active icon={<HomeIcon />} label="Dashboard" />
         <NavItem icon={<FileIcon />} label="Files" />
-        <NavItem icon={<NetworkIcon />} label="Network" />
+        <NavItem icon={<NetworkIcon />} label="Network" badge={!isOnline ? '!' : undefined} />
         <NavItem icon={<ConfigIcon />} label="Config" />
       </nav>
 
       <div className="mt-auto space-y-6">
+        {/* Connection Status */}
+        <div className={`p-3 rounded-lg border ${
+          isOnline
+            ? 'bg-emerald-900/20 border-emerald-800/50'
+            : 'bg-amber-900/20 border-amber-800/50'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <span className={`w-2 h-2 rounded-full ${
+              isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+            }`}></span>
+            <p className={`text-[10px] font-mono uppercase tracking-widest ${
+              isOnline ? 'text-emerald-400' : 'text-amber-400'
+            }`}>
+              {isOnline ? 'Connected' : 'Offline'}
+            </p>
+          </div>
+        </div>
+
         <div>
           <div className="flex justify-between text-[10px] mb-1 text-slate-400 font-mono uppercase tracking-widest">
             <span>CPU Load</span>
@@ -62,10 +87,15 @@ const Sidebar: React.FC<SidebarProps> = ({ systemState }) => {
   );
 };
 
-const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean }> = ({ icon, label, active }) => (
-  <div className={`flex items-center p-3 rounded-xl transition-all cursor-pointer ${active ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}>
+const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; badge?: string }> = ({ icon, label, active, badge }) => (
+  <div className={`flex items-center p-3 rounded-xl transition-all cursor-pointer relative ${active ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}>
     <span className="mr-3">{icon}</span>
     <span className="font-medium">{label}</span>
+    {badge && (
+      <span className="absolute right-3 w-4 h-4 bg-amber-500 text-[9px] text-white rounded-full flex items-center justify-center font-bold">
+        {badge}
+      </span>
+    )}
   </div>
 );
 

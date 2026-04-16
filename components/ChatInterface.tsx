@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, Content } from '@google/genai';
 import { ChatMessage, SystemState, FileAsset } from '../types';
+import { getOfflineResponse } from '../offlineAI';
+import { saveChatHistory, loadChatHistory } from '../storage';
 
 interface ChatInterfaceProps {
   addLog: (msg: string, type?: 'action' | 'info' | 'error') => void;
@@ -9,17 +11,21 @@ interface ChatInterfaceProps {
   addFile: (name: string, content: string) => void;
   setSystemState: React.Dispatch<React.SetStateAction<SystemState>>;
   files: FileAsset[];
+  isOnline: boolean;
+  notesCount: number;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile, setSystemState, files }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile, setSystemState, files, isOnline, notesCount }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const saved = loadChatHistory<ChatMessage>();
+    if (saved.length > 0) return saved;
+    return [{
       id: 'welcome',
       role: 'assistant',
       content: 'JARVIS online. Come posso assisterti oggi?',
       timestamp: new Date().toLocaleTimeString(),
-    },
-  ]);
+    }];
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -27,6 +33,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile,
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Persist chat messages
+  useEffect(() => {
+    saveChatHistory(messages);
   }, [messages]);
 
   const addMessage = (role: 'user' | 'assistant' | 'system', content: string) => {
@@ -59,6 +70,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile,
     return 'Funzione non riconosciuta.';
   };
 
+  const handleOfflineMessage = (text: string) => {
+    const response = getOfflineResponse(text, { files: files.length, notes: notesCount });
+
+    if (response.action) {
+      const { type, payload } = response.action;
+      addLog(`OFFLINE_EXEC: ${type}`, 'action');
+      if (type === 'create_note') addNote(payload.content);
+      else if (type === 'create_file') addFile(payload.name, payload.content);
+      else if (type === 'open_app') setSystemState(prev => ({ ...prev, activeWindow: payload.app_name }));
+    }
+
+    addMessage('assistant', response.text);
+    addLog(`JARVIS_OFFLINE: ${response.text.substring(0, 40)}...`, 'info');
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
@@ -66,6 +92,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ addLog, addNote, addFile,
     setInput('');
     addMessage('user', text);
     addLog(`User: ${text.substring(0, 40)}...`, 'info');
+
+    // Offline path
+    if (!isOnline) {
+      setIsLoading(true);
+      // Small delay to feel natural
+      await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
+      handleOfflineMessage(text);
+      setIsLoading(false);
+      return;
+    }
+
+    // Online path - Gemini API
     setIsLoading(true);
 
     try {
@@ -144,7 +182,6 @@ Puoi anche rispondere a domande generali, fare analisi, scrivere codice, e assis
           addLog(`KERNEL_EXEC: ${fc.name}`, 'action');
           const result = handleFunctionCall(fc.name!, fc.args as Record<string, unknown>);
 
-          // Send function response back and get final text
           historyRef.current.push({
             role: 'model',
             parts: [{ functionCall: { name: fc.name!, args: fc.args as Record<string, unknown> } }],
@@ -183,11 +220,23 @@ Puoi anche rispondere a domande generali, fare analisi, scrivere codice, e assis
       }
     } catch (err) {
       console.error(err);
-      addMessage('system', 'Errore di comunicazione con il kernel AI.');
-      addLog('Chat error: connessione fallita.', 'error');
+      // Fall back to offline if the API call fails
+      addLog('API non raggiungibile, fallback offline.', 'error');
+      handleOfflineMessage(text);
     }
 
     setIsLoading(false);
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: 'Chat resettata. Come posso assisterti?',
+      timestamp: new Date().toLocaleTimeString(),
+    }]);
+    historyRef.current = [];
+    addLog('Chat history cleared.', 'action');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -199,6 +248,17 @@ Puoi anche rispondere a domande generali, fare analisi, scrivere codice, e assis
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header with clear button */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={clearChat}
+          className="text-[10px] text-slate-500 hover:text-slate-300 font-mono uppercase tracking-wider transition-colors"
+          title="Pulisci la chat"
+        >
+          ✕ Clear
+        </button>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4 scrollbar-thin scrollbar-thumb-slate-700">
         {messages.map(msg => (
@@ -249,7 +309,7 @@ Puoi anche rispondere a domande generali, fare analisi, scrivere codice, e assis
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Scrivi un messaggio..."
+          placeholder={isOnline ? 'Scrivi un messaggio...' : 'Modalità offline — comandi base...'}
           className="flex-1 bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 resize-none focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 font-mono"
           disabled={isLoading}
         />
