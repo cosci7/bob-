@@ -29,3 +29,38 @@ export interface SystemState {
   activeWindow: string;
   notifications: number;
 }
+
+export type BrainActionType =
+  | 'create_note'
+  | 'create_file'
+  | 'download_file'
+  | 'open_application'
+  | 'get_system_info'
+  | 'none';
+
+export interface BrainDecision {
+  id: string;
+  intent: string;
+  allowed: boolean;
+  blocked: boolean;
+  response: string;
+  action?: {
+    type: BrainActionType;
+    payload: Record<string, unknown>;
+  };
+}
+
+export interface BrainSnapshot {
+  shortTermCount: number;
+  longTermMemories: number;
+  blockedActions: number;
+  learningScore: number;
+  dominantIntent: string;
+}
+
+export interface BrainCommandResult {
+  decisionId: string;
+  response: string;
+  blocked: boolean;
+  canGiveFeedback: boolean;
+}
