@@ -1,14 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import VoiceAssistant from './components/VoiceAssistant';
 import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
-import { SystemLog, Note, SystemState, FileAsset } from './types';
+import { SystemLog, Note, SystemState, FileAsset, BrainSnapshot, BrainCommandResult } from './types';
+import { AIBrain } from './brain';
 
 const App: React.FC = () => {
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [files, setFiles] = useState<FileAsset[]>([]);
+  const brainRef = useRef(new AIBrain());
+  const [brainSnapshot, setBrainSnapshot] = useState<BrainSnapshot>(brainRef.current.getSnapshot());
   const [systemState, setSystemState] = useState<SystemState>({
     cpuUsage: 12,
     ramUsage: 45,
@@ -51,6 +54,75 @@ const App: React.FC = () => {
     addLog(`File creato: ${name} (${newFile.size} bytes)`, 'action');
   };
 
+  const triggerDownload = (file: FileAsset) => {
+    const blob = new Blob([file.content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const onTextCommand = (input: string): BrainCommandResult => {
+    const decision = brainRef.current.runCycle(input, { notes, files, systemState });
+    setBrainSnapshot(brainRef.current.getSnapshot());
+
+    if (!decision.allowed || decision.blocked) {
+      addLog(`BRAIN_SAFETY_BLOCK: ${decision.intent}`, 'error');
+      return {
+        decisionId: decision.id,
+        response: decision.response,
+        blocked: true,
+        canGiveFeedback: false,
+      };
+    }
+
+    if (decision.action?.type === 'create_note') {
+      addNote(String(decision.action.payload.content ?? ''));
+    } else if (decision.action?.type === 'create_file') {
+      addFile(String(decision.action.payload.name ?? 'file.txt'), String(decision.action.payload.content ?? ''));
+    } else if (decision.action?.type === 'download_file') {
+      const name = String(decision.action.payload.name ?? '').trim();
+      const file = files.find((f) => f.name.toLowerCase() === name.toLowerCase());
+      if (file) {
+        triggerDownload(file);
+        addLog(`Download file avviato: ${file.name}`, 'action');
+      } else {
+        addLog(`Download fallito: file non trovato (${name})`, 'error');
+        return {
+          decisionId: decision.id,
+          response: 'File non trovato: controlla il nome esatto.',
+          blocked: false,
+          canGiveFeedback: true,
+        };
+      }
+    } else if (decision.action?.type === 'open_application') {
+      const appName = String(decision.action.payload.appName ?? systemState.activeWindow);
+      setSystemState((prev) => ({ ...prev, activeWindow: appName }));
+      addLog(`Finestra attiva aggiornata: ${appName}`, 'action');
+    } else if (decision.action?.type === 'get_system_info') {
+      addLog('Richiesta info sistema elaborata dal brain.', 'info');
+    }
+
+    addLog(`BRAIN_EXEC: ${decision.intent}`, 'action');
+    return {
+      decisionId: decision.id,
+      response: decision.response,
+      blocked: false,
+      canGiveFeedback: decision.intent !== 'help' && decision.intent !== 'unknown',
+    };
+  };
+
+  const onBrainFeedback = (decisionId: string, positive: boolean): string => {
+    const message = brainRef.current.learn(decisionId, positive);
+    setBrainSnapshot(brainRef.current.getSnapshot());
+    addLog(`BRAIN_LEARN: ${positive ? 'positive' : 'negative'} feedback`, 'info');
+    return message;
+  };
+
   // Mock system updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -89,7 +161,7 @@ const App: React.FC = () => {
 
         <div className="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
           <div className="col-span-12 lg:col-span-8 flex flex-col space-y-6 overflow-hidden">
-            <Dashboard logs={logs} notes={notes} files={files} systemState={systemState} />
+            <Dashboard logs={logs} notes={notes} files={files} systemState={systemState} brainSnapshot={brainSnapshot} />
           </div>
 
           <div className="col-span-12 lg:col-span-4 flex flex-col space-y-6">
@@ -108,6 +180,9 @@ const App: React.FC = () => {
                 addFile={addFile}
                 setSystemState={setSystemState} 
                 files={files}
+                onTextCommand={onTextCommand}
+                onBrainFeedback={onBrainFeedback}
+                brainSnapshot={brainSnapshot}
               />
             </div>
           </div>

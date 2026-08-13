@@ -1,15 +1,16 @@
 
 import React from 'react';
-import { SystemLog, Note, SystemState, FileAsset } from '../types';
+import { SystemLog, Note, SystemState, FileAsset, BrainSnapshot } from '../types';
 
 interface DashboardProps {
   logs: SystemLog[];
   notes: Note[];
   files: FileAsset[];
   systemState: SystemState;
+  brainSnapshot: BrainSnapshot;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ logs, notes, files, systemState }) => {
+const Dashboard: React.FC<DashboardProps> = ({ logs, notes, files, systemState, brainSnapshot }) => {
   const downloadFile = (file: FileAsset) => {
     const blob = new Blob([file.content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -27,7 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, notes, files, systemState }
       <div className="grid grid-cols-3 gap-6">
         <StatCard title="WINDOWS" value={systemState.activeWindow} color="sky" />
         <StatCard title="FILES STORAGE" value={`${files.length} Assets`} color="emerald" />
-        <StatCard title="SECURITY" value="ALPHA PROTOCOL" color="amber" />
+        <StatCard title="BRAIN SCORE" value={`L${brainSnapshot.learningScore}`} color="amber" />
       </div>
 
       <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
@@ -94,6 +95,17 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, notes, files, systemState }
             )}
           </div>
         </div>
+
+        <div className="col-span-12 glass-panel rounded-2xl p-6 border border-slate-800">
+          <h3 className="text-sm font-mono text-slate-400 mb-4 uppercase tracking-widest">AI Brain Snapshot</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-xs font-mono">
+            <MiniMetric label="Short-Term" value={String(brainSnapshot.shortTermCount)} />
+            <MiniMetric label="Long-Term" value={String(brainSnapshot.longTermMemories)} />
+            <MiniMetric label="Safety Blocks" value={String(brainSnapshot.blockedActions)} />
+            <MiniMetric label="Learning" value={brainSnapshot.learningScore.toFixed(2)} />
+            <MiniMetric label="Top Intent" value={brainSnapshot.dominantIntent} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -112,5 +124,12 @@ const StatCard: React.FC<{ title: string; value: string; color: 'sky' | 'emerald
     </div>
   );
 };
+
+const MiniMetric: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
+    <p className="text-slate-500 uppercase tracking-wider">{label}</p>
+    <p className="text-slate-200 mt-1 truncate">{value}</p>
+  </div>
+);
 
 export default Dashboard;

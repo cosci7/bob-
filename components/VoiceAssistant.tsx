@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Type, FunctionDeclaration } from '@google/genai';
-import { SystemState, FileAsset } from '../types';
+import { SystemState, FileAsset, BrainCommandResult, BrainSnapshot } from '../types';
 
 // Helper functions for audio encoding/decoding
 function encode(bytes: Uint8Array) {
@@ -48,13 +48,28 @@ interface VoiceAssistantProps {
   addFile: (name: string, content: string) => void;
   setSystemState: React.Dispatch<React.SetStateAction<SystemState>>;
   files: FileAsset[];
+  onTextCommand: (input: string) => BrainCommandResult;
+  onBrainFeedback: (decisionId: string, positive: boolean) => string;
+  brainSnapshot: BrainSnapshot;
 }
 
-const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFile, setSystemState, files }) => {
+const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
+  addLog,
+  addNote,
+  addFile,
+  setSystemState,
+  files,
+  onTextCommand,
+  onBrainFeedback,
+  brainSnapshot,
+}) => {
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [transcription, setTranscription] = useState<string>('');
   const [visualizerData, setVisualizerData] = useState<number[]>(new Array(32).fill(0));
+  const [commandInput, setCommandInput] = useState('');
+  const [commandResponse, setCommandResponse] = useState('');
+  const [feedbackDecisionId, setFeedbackDecisionId] = useState<string | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sessionRef = useRef<any>(null);
@@ -265,6 +280,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
     addLog('JARVIS Offline.', 'info');
   };
 
+  const submitTextCommand = () => {
+    if (!commandInput.trim()) return;
+    const result = onTextCommand(commandInput);
+    setCommandResponse(result.response);
+    setFeedbackDecisionId(result.canGiveFeedback ? result.decisionId : null);
+    setCommandInput('');
+  };
+
+  const sendFeedback = (positive: boolean) => {
+    if (!feedbackDecisionId) return;
+    const feedbackResult = onBrainFeedback(feedbackDecisionId, positive);
+    setCommandResponse((prev) => `${prev}\n${feedbackResult}`);
+    setFeedbackDecisionId(null);
+  };
+
   return (
     <div className="flex flex-col h-full space-y-6">
       <div className="flex-1 bg-slate-950/80 rounded-xl border border-slate-800 p-4 flex flex-col items-center justify-center relative overflow-hidden">
@@ -313,6 +343,49 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ addLog, addNote, addFil
         <button className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 text-[10px] text-slate-400 flex items-center justify-center hover:bg-slate-800 transition-colors uppercase tracking-widest font-mono">
           Logs
         </button>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-3">
+        <p className="text-[10px] uppercase tracking-widest text-slate-400 font-mono">Text Neural Interface</p>
+        <div className="flex gap-2">
+          <input
+            value={commandInput}
+            onChange={(e) => setCommandInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submitTextCommand()}
+            placeholder='Es: crea file report.txt: stato operativo'
+            className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-slate-100 outline-none focus:border-sky-500"
+          />
+          <button
+            onClick={submitTextCommand}
+            className="px-3 py-2 text-xs font-mono rounded bg-sky-600 text-white hover:bg-sky-500 transition-colors"
+          >
+            RUN
+          </button>
+        </div>
+        {commandResponse && (
+          <div className="rounded border border-slate-800 bg-slate-900/70 p-2 text-[11px] text-slate-300 whitespace-pre-line">
+            {commandResponse}
+          </div>
+        )}
+        {feedbackDecisionId && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => sendFeedback(true)}
+              className="flex-1 rounded border border-emerald-700 bg-emerald-900/20 px-2 py-1 text-[10px] font-mono text-emerald-300"
+            >
+              FEEDBACK +
+            </button>
+            <button
+              onClick={() => sendFeedback(false)}
+              className="flex-1 rounded border border-red-700 bg-red-900/20 px-2 py-1 text-[10px] font-mono text-red-300"
+            >
+              FEEDBACK -
+            </button>
+          </div>
+        )}
+        <p className="text-[10px] text-slate-500 font-mono">
+          Memory {brainSnapshot.shortTermCount} | Blocks {brainSnapshot.blockedActions} | Intent {brainSnapshot.dominantIntent}
+        </p>
       </div>
     </div>
   );
